@@ -1,0 +1,22 @@
+{
+  "coreUrl": "http://localhost:3000",
+  "apiKey": "",
+  "_comment_apiKey": "Only needed once you set AUTH_API_KEYS on xoft-core (see xoft-core/.env.example) — must match one of those keys. Leave blank while the core API is open (localhost/LAN dev default).",
+  "deviceName": "My Windows PC",
+  "heartbeatIntervalMs": 30000,
+  "pollIntervalMs": 3000,
+  "stateReportIntervalMs": 60000,
+
+  "_comment_allowedRoots": "File-related commands (list_files, prepare_transfer, receive_transfer) can ONLY touch paths inside these directories. Nothing outside this list is ever reachable, no matter what a command asks for.",
+  "allowedRoots": [
+    "C:\\Users\\%USERNAME%\\Documents\\XoftShared"
+  ],
+
+  "_comment_appAllowlist": "Only these names can be launched/closed by device_launch_app / device_close_app — spec section 17 (no arbitrary shell execution). Add your own here; 'path' is what gets launched, 'processName' is what taskkill targets to close it.",
+  "appAllowlist": {
+    "chrome": { "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "processName": "chrome.exe" },
+    "vscode": { "path": "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe", "processName": "Code.exe" },
+    "notepad": { "path": "notepad.exe", "processName": "notepad.exe" },
+    "explorer": { "path": "explorer.exe", "processName": "explorer.exe" }
+  }
+}

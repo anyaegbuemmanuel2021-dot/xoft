@@ -1,0 +1,25 @@
+{
+  "name": "xoft-windows-agent",
+  "version": "0.1.0",
+  "description": "XOFT desktop agent for Windows — polls xoft-core for commands, executes an allowlisted set of actions, reports verified results.",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "xoft-agent": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "pair": "node src/index.js --pair",
+    "build:exe": "pkg . --targets node18-win-x64 --output dist/xoft-agent.exe"
+  },
+  "pkg": {
+    "assets": ["config.example.json"]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

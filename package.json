@@ -1,0 +1,27 @@
+{
+  "name": "xoft-core",
+  "version": "0.9.0",
+  "description": "XOFT personal AI assistant - core layer (AI provider abstraction, orchestrator, memory)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:pc": "node start-pc.cjs",
+    "dev": "node --watch src/index.js",
+    "test": "node --test",
+    "typecheck:shared": "pnpm --filter @xoft/protocol typecheck",
+    "build:mobile": "pnpm --dir apps/mobile run typecheck",
+    "build:desktop": "pnpm --dir apps/desktop run build",
+    "universal:check": "pnpm run typecheck:shared && pnpm run build:mobile && pnpm run build:desktop",
+    "verify:deps": "node scripts/dependency-doctor.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.4.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

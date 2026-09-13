@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>XOFT</title>
+<style>
+  :root { --bg:#0a0a0a; --panel:#141414; --border:#2a2a2a; --text:#e8e8e8; --dim:#888; --accent:#e8e8e8; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size:13px; }
+  header { padding:16px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  header h1 { font-size:15px; font-weight:600; letter-spacing:0.08em; margin:0; }
+  #status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; background:#555; }
+  #status-dot.ok { background:#e8e8e8; }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:1px; background:var(--border); }
+  section { background:var(--panel); padding:16px 20px; min-height:200px; }
+  section h2 { font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--dim); margin:0 0 12px; }
+  .row { padding:8px 0; border-bottom:1px solid var(--border); }
+  .row:last-child { border-bottom:none; }
+  .muted { color:var(--dim); }
+  .badge { display:inline-block; padding:1px 6px; border:1px solid var(--border); border-radius:3px; font-size:10px; margin-left:6px; }
+  button { background:transparent; border:1px solid var(--border); color:var(--text); padding:4px 10px; font-family:inherit; font-size:11px; cursor:pointer; border-radius:3px; }
+  button:hover { border-color: var(--accent); }
+  #stop-btn { border-color:#e8e8e8; }
+  pre { white-space:pre-wrap; word-break:break-word; margin:0; font-size:11px; color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>XOFT — PERSONAL AI OPERATING SYSTEM</h1>
+  <div><span id="status-dot"></span><span id="status-text" class="muted">checking...</span>
+    <button id="stop-btn" onclick="toggleStop()" style="margin-left:16px">EMERGENCY STOP</button>
+  </div>
+</header>
+<main>
+  <section><h2>Providers &amp; Integrations</h2><div id="providers"></div></section>
+  <section><h2>Tools</h2><div id="tools"></div></section>
+  <section><h2>Tasks</h2><div id="tasks"></div></section>
+  <section><h2>Pending Approvals</h2><div id="approvals"></div></section>
+  <section style="grid-column: span 2"><h2>Activity</h2><div id="activity"></div></section>
+</main>
+<script>
+async function j(url, opts = {}) {
+  const key = localStorage.getItem('xoft_api_key');
+  const headers = { ...(opts.headers || {}) };
+  if (key) headers['X-API-Key'] = key;
+  let r = await fetch(url, { ...opts, headers });
+
+  if (r.status === 401) {
+    // AUTH_API_KEYS is set on the server but this browser doesn't have a
+    // key stored yet (or the stored one is wrong/revoked) — ask once,
+    // remember it, retry. Every subsequent call in this session reuses it.
+    const entered = window.prompt('XOFT core requires an API key (AUTH_API_KEYS is set on the server). Enter it:');
+    if (!entered) throw new Error('No API key provided — cannot load dashboard data.');
+    localStorage.setItem('xoft_api_key', entered.trim());
+    r = await fetch(url, { ...opts, headers: { ...headers, 'X-API-Key': entered.trim() } });
+    if (r.status === 401) {
+      localStorage.removeItem('xoft_api_key');
+      throw new Error('That key was rejected. Reload the page to try again.');
+    }
+  }
+  return r.json();
+}
+
+async function refresh() {
+  try {
+    const status = await j('/api/status');
+    document.getElementById('status-dot').className = status.configuredProviders.length ? 'ok' : '';
+    document.getElementById('status-text').textContent =
+      status.configuredProviders.length ? status.configuredProviders.join(', ') : 'no providers configured';
+
+    const stop = await j('/api/emergency-stop');
+    document.getElementById('stop-btn').textContent = stop.active ? 'RESUME' : 'EMERGENCY STOP';
+    document.getElementById('stop-btn').style.background = stop.active ? '#e8e8e8' : 'transparent';
+    document.getElementById('stop-btn').style.color = stop.active ? '#0a0a0a' : '#e8e8e8';
+
+    document.getElementById('providers').innerHTML =
+      Object.entries(status.integrations ?? {}).map(([k,v]) =>
+        `<div class="row">${k}<span class="badge">${v ? 'configured' : 'not configured'}</span></div>`
+      ).join('') || '<div class="muted">none</div>';
+
+    const tools = await j('/api/tools');
+    document.getElementById('tools').innerHTML = tools.map(t =>
+      `<div class="row">${t.name}<span class="badge">risk ${t.riskLevel}</span><span class="badge">${t.status}</span></div>`
+    ).join('');
+
+    const tasks = await j('/api/tasks');
+    document.getElementById('tasks').innerHTML = tasks.length ? tasks.slice(-10).reverse().map(t =>
+      `<div class="row">${t.goal}<span class="badge">${t.status}</span></div>`
+    ).join('') : '<div class="muted">no tasks yet</div>';
+
+    const approvals = await j('/api/approvals');
+    document.getElementById('approvals').innerHTML = approvals.length ? approvals.map(a =>
+      `<div class="row">${a.toolName} (risk ${a.riskLevel})
+         <button onclick="approve('${a.id}')">approve</button>
+         <button onclick="reject('${a.id}')">reject</button>
+       </div>`
+    ).join('') : '<div class="muted">none pending</div>';
+
+    const activity = await j('/api/activity');
+    document.getElementById('activity').innerHTML = activity.slice(-15).reverse().map(a =>
+      `<div class="row">${a.ts} — ${a.type}${a.toolName ? ' — ' + a.toolName : ''}</div>`
+    ).join('') || '<div class="muted">no activity yet</div>';
+  } catch (err) {
+    document.getElementById('status-dot').className = '';
+    document.getElementById('status-text').textContent = err.message;
+  }
+}
+
+async function approve(id) { await j('/api/approvals/' + id + '/approve', { method: 'POST' }); refresh(); }
+async function reject(id) { await j('/api/approvals/' + id + '/reject', { method: 'POST' }); refresh(); }
+async function toggleStop() {
+  const stop = await j('/api/emergency-stop');
+  if (stop.active) await j('/api/emergency-stop/deactivate', { method: 'POST' });
+  else await j('/api/emergency-stop/activate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({reason:'manual dashboard stop'}) });
+  refresh();
+}
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>
