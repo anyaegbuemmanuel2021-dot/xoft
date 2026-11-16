@@ -1,10 +1,8 @@
-# XOFT — Personal AI Assistant Core
+# XOFT — Legacy Personal AI Assistant Core
 
-Real, working backend for a JARVIS-style personal AI assistant. Every piece
-listed as done in `docs/FEATURE_COMPARISON.md` has been executed and
-verified live during development — booted, hit with real HTTP requests,
-checked for correct behavior with and without credentials. Nothing here
-simulates success.
+> **Legacy repository:** retained as an earlier development line for reference. The current integration target is [xoft-j](https://github.com/anyaegbuemmanuel2021-dot/xoft-j). New development, fixes, and releases should be made in `xoft-j` unless a change specifically needs to preserve this historical version.
+
+This repository contains an earlier implementation of the XOFT personal AI assistant. Its documentation describes the capabilities and setup of this version; do not assume that every integration is currently deployed or connected to live provider accounts.
 
 Start with **`docs/FEATURE_COMPARISON.md`** for a one-page table of what's
 live, what needs a credential, and what's genuinely out of a backend's
